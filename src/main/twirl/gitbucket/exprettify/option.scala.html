@@ -1,0 +1,170 @@
+@(repository: gitbucket.core.service.RepositoryService.RepositoryInfo,
+languages: List[gitbucket.exprettify.model.ExPrettifyLanguage],
+patterns: List[gitbucket.exprettify.model.ExPrettifyPattern],
+info: Option[Any])(implicit context: gitbucket.core.controller.Context)
+@import gitbucket.core.view.helpers
+
+
+@gitbucket.core.html.main("ExPrettify", Some(repository)){
+@gitbucket.core.html.menu("settings", repository){
+@gitbucket.core.settings.html.menu("exprettify", repository){
+@gitbucket.core.helper.html.information(info)
+<div class="panel panel-default">
+  <div class="panel-heading strong">Language</div>
+  <div class="panel-body">
+    <ul id="language-list" class="collaborator">
+    </ul>
+    
+    <div>
+      Language:<input id="language-name" class="form-control" style="width:10em; margin-bottom:0px;margin-left:1em;margin-right:1em; display: inline; vertical-align: middle;" type="text">
+      Script URL:<input id="script-url" class="form-control" style="width:20em; margin-bottom:0px;margin-left:1em;margin-right:1em;display: inline; vertical-align: middle;" type="text">
+      <input class="btn btn-default" value="Add" id="addLanguage" type="button">
+    </div>
+    
+  </div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading strong">File Pattern</div>
+  <div class="panel-body">
+    <ul id="pattern-list" class="collaborator">
+    </ul>
+    
+    <div>
+      File Pattern:<input id="file-pattern" class="form-control" style="width:10em; margin-bottom:0px;margin-left:1em;margin-right:1em; display: inline; vertical-align: middle;" type="text">
+      Language:<input id="pattern-lang" class="form-control" style="width:20em; margin-bottom:0px;margin-left:1em;margin-right:1em;display: inline; vertical-align: middle;" type="text">
+      <input class="btn btn-default" value="Add" id="addPattern" type="button">
+    </div>
+    
+  </div>
+</div>
+<form id="form" method="post" action="@helpers.url(repository)/settings/exprettify/default">
+  <div class="align-right" style="margin-top: 20px;">
+    <input type="hidden" id="language" name="language">
+    <input type="hidden" id="pattern" name="pattern">
+    <input id="defaultSubmit" type="submit" class="btn btn-success" value="Apply changes"/>
+  </div>
+</form>
+<hr>
+
+<form id="form" method="post" action="@helpers.url(repository)/settings/exprettify/copy">
+  <div class="panel panel-default">
+    <div class="panel-heading strong">Copy Settings From Another Repository</div>
+    <div class="panel-body">
+
+      Owner:<input name="fowner" class="form-control" style="width:10em; margin-bottom:0px;margin-left:1em;margin-right:1em; display: inline; vertical-align: middle;" type="text">
+      Repository:<input name="frepo" class="form-control" style="width:20em; margin-bottom:0px;margin-left:1em;margin-right:1em;display: inline; vertical-align: middle;" type="text">
+      <input type="submit" class="btn btn-success" value="Copy"/>
+    </div>
+  </div>
+</form>
+}
+}
+}
+
+<script>
+$(function(){
+  var styleLangA = "width: 10em; margin-bottom: 0px;margin-left:1em;margin-right:1em;display:inline; vertical-align: middle;",
+      styleLangB = "width:20em; margin-bottom: 0px;margin-left:1em;margin-right:1em;display: inline; vertical-align: middle;",
+      stylePattA = "width: 10em; margin-bottom: 0px;margin-left:1em;margin-right:1em;display:inline; vertical-align: middle;",
+      stylePattB = "width:20em; margin-bottom: 0px;margin-left:1em;margin-right:1em;display: inline; vertical-align: middle;",
+      lang_list = 'language-list',
+      patt_list = 'pattern-list',
+      lang_titlea= 'Language:',
+      lang_titleb= 'Script URL:',
+      pat_titlea= 'File Pattern:',
+      pat_titleb= 'Language:'
+ ;
+
+  $('#addLanguage').click(createLanguageItem);
+  $('#addPattern').click(createPatternItem);
+  $('#defaultSubmit').click(submitData);
+
+
+@languages.map { l =>
+  createListItem(lang_list,'@l.language','@l.source.replaceAll("'", "\\'")',styleLangA,styleLangB,lang_titlea,lang_titleb);
+}
+@patterns.map { l =>
+  createListItem(patt_list,'@l.pattern','@l.language',stylePattA,stylePattB,pat_titlea,pat_titleb);
+}
+
+
+  // create Data
+  function createItem(id1,id2,listid,stylea,styleb,titlea,titleb){
+    var $a = $('#'+id1),
+        $b = $('#'+id2),
+        a = $a.val(),
+        b = $b.val()
+    ;
+    if($.trim(a) == ''){
+      return false;
+    }
+    createListItem(listid,a,b,stylea,styleb,titlea,titleb);
+    $a.val("");
+    return true;
+  }
+  // create Data for Language
+  function createLanguageItem(){
+    createItem('language-name','script-url',
+               lang_list,styleLangA,styleLangB,lang_titlea,lang_titleb);
+  }
+  // create Data for Pattern
+  function createPatternItem(){
+    createItem('file-pattern','pattern-lang',
+               patt_list,stylePattA,stylePattB,pat_titlea,pat_titleb);
+  }
+
+  // create DOM item
+  function createListItem(listid,a,b,stylea,styleb,titlea,titleb){
+    $('#'+listid).append(
+      $('<li>')
+        .append(titlea)
+        .append(
+          $('<input class="form-control data-a" style="'+stylea+'" type="text">')
+            .val(a))
+        .append(titleb)
+        .append(
+          $('<input class="form-control data-b" style="'+styleb+'" type="text">')
+            .val(b))
+        .append($('<a href="#" class="remove pull-right">(remove)</a>')
+                .click(function(){
+                  $(this).parent().remove();
+                })));
+  }
+  
+  // create submit data
+  function submitData(){
+    createLanguageItem();
+    createPatternItem();
+    var lang = collectData($("#language-list")),
+        patt = collectData($("#pattern-list"));
+    $("#language").val(lang);
+    $("#pattern").val(patt);
+  }
+  
+  function collectData($list){
+    var data = {};
+    $list.children().each(function(){
+      var $this = $(this),
+          $a = $this.children(".data-a"),
+          $b = $this.children(".data-b"),
+          a = $a ? $a.val().trim() : "",
+          b = $b && a ? $b.val().trim() : "";
+      if(a){
+        data[a] = b;
+      }
+    });
+    var str = "";
+    var first = true;
+    for(key in data){
+      if(!first){
+        str += "|" ;
+      }else{
+        first = false;
+      }
+      str+=key + "^" + data[key];
+    }
+    return str;
+  }
+});
+</script>
+

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<changeSet>
+    <createTable tableName="EXPRETTIFY_LANGUAGE">
+        <column name="USER_NAME" type="varchar(100)" nullable="false"/>
+        <column name="REPOSITORY_NAME" type="varchar(100)" nullable="false"/>
+        <column name="LANGUAGE" type="varchar(100)" nullable="false"/>
+        <column name="SOURCE" type="varchar(100)" nullable="true"/>
+    </createTable>
+    <createTable tableName="EXPRETTIFY_PATTERN">
+        <column name="USER_NAME" type="varchar(100)" nullable="false"/>
+        <column name="REPOSITORY_NAME" type="varchar(100)" nullable="false"/>
+        <column name="PATTERN" type="varchar(100)" nullable="false"/>
+        <column name="LANGUAGE" type="varchar(100)" nullable="false"/>
+
+    </createTable>
+
+    <addPrimaryKey constraintName="IDX_EXPRETTIFY_LANGUAGE_PK" tableName="EXPRETTIFY_LANGUAGE" columnNames="USER_NAME, REPOSITORY_NAME, LANGUAGE"/>
+    <addPrimaryKey constraintName="IDX_EXPRETTIFY_PATTERN_PK" tableName="EXPRETTIFY_PATTERN" columnNames="USER_NAME, REPOSITORY_NAME, PATTERN"/>
+
+</changeSet>
